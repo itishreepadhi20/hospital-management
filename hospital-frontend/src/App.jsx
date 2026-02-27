@@ -18,6 +18,9 @@ import BillingList from './Billing/BillingList'
 import GenerateBill from './Billing/GenerateBill'
 import Login from './Auth/Login'
 import Register from './Auth/Register'
+import Home from '../pages/Home'
+import DashboardPage from '../pages/DashboardPage'
+import NotFound from '../pages/NotFound'
 import './App.css'
 
 function App() {
@@ -45,6 +48,9 @@ function App() {
        <GenerateBill/>
        <Login/>
        <Register/>
+       <Home/>
+       <DashboardPage/>
+       <NotFound/>
       <Dashboard/>
       <Footer />
       </div>
