@@ -14,6 +14,8 @@ import AddDoctor from './Doctors/AddDoctor'
 import AppointmentList from './Appointments/AppointmentList'
 import AddAppointment from './Appointments/AddApointment'
 import UpdateAppointment from './Appointments/UpdateAppointment'
+import BillingList from './Billing/BillingList'
+import GenerateBill from './Billing/GenerateBill'
 import './App.css'
 
 function App() {
@@ -37,6 +39,8 @@ function App() {
        <AppointmentList/>
        <AddAppointment/>
        <UpdateAppointment/>
+       <BillingList/>
+       <GenerateBill/>
 
       <Dashboard/>
       <Footer />
