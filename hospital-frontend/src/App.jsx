@@ -11,6 +11,9 @@ import DoctorDetails from './Doctors/DoctorDetails'
 import DoctorSchedule from './Doctors/DoctorSchedule'
 import DoctorList from './Doctors/DoctorList'
 import AddDoctor from './Doctors/AddDoctor'
+import AppointmentList from './Appointments/AppointmentList'
+import AddAppointment from './Appointments/AddApointment'
+import UpdateAppointment from './Appointments/UpdateAppointment'
 import './App.css'
 
 function App() {
@@ -31,6 +34,10 @@ function App() {
        <PatientList/>
        <AddPatients/>
        <PatientDetails/>
+       <AppointmentList/>
+       <AddAppointment/>
+       <UpdateAppointment/>
+
       <Dashboard/>
       <Footer />
       </div>
