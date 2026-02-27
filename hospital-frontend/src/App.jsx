@@ -16,6 +16,8 @@ import AddAppointment from './Appointments/AddApointment'
 import UpdateAppointment from './Appointments/UpdateAppointment'
 import BillingList from './Billing/BillingList'
 import GenerateBill from './Billing/GenerateBill'
+import Login from './Auth/Login'
+import Register from './Auth/Register'
 import './App.css'
 
 function App() {
@@ -41,7 +43,8 @@ function App() {
        <UpdateAppointment/>
        <BillingList/>
        <GenerateBill/>
-
+       <Login/>
+       <Register/>
       <Dashboard/>
       <Footer />
       </div>
