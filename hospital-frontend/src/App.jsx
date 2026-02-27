@@ -7,6 +7,10 @@ import Dashboard from './components/Dashboard'
 import PatientList from './patients/PatientsList'
 import AddPatients from './patients/addPatients'
 import PatientDetails from './patients/PatientsDetails'
+import DoctorDetails from './Doctors/DoctorDetails'
+import DoctorSchedule from './Doctors/DoctorSchedule'
+import DoctorList from './Doctors/DoctorList'
+import AddDoctor from './Doctors/AddDoctor'
 import './App.css'
 
 function App() {
@@ -15,17 +19,21 @@ function App() {
   return (
     <>
       <Navbar/>
-       <div className="min-h-screen">
+       <div className="min-h-screen bg-gray-100 p-6">
         <h1 className="text-center mt-10 text-2xl">
           Welcome to Hospital System
         </h1>
-      </div>
+        
+      <DoctorList/>
+      <DoctorDetails/>
+      <DoctorSchedule/>
+      <AddDoctor/>
        <PatientList/>
        <AddPatients/>
        <PatientDetails/>
       <Dashboard/>
       <Footer />
-      
+      </div>
     </>
   )
 }
