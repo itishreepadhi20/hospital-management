@@ -4,6 +4,9 @@ import viteLogo from '/vite.svg'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
 import Dashboard from './components/Dashboard'
+import PatientList from './patients/PatientsList'
+import AddPatients from './patients/addPatients'
+import PatientDetails from './patients/PatientsDetails'
 import './App.css'
 
 function App() {
@@ -17,6 +20,9 @@ function App() {
           Welcome to Hospital System
         </h1>
       </div>
+       <PatientList/>
+       <AddPatients/>
+       <PatientDetails/>
       <Dashboard/>
       <Footer />
       

@@ -48,7 +48,7 @@ const Navbar = () => {
         <div>
           <a
             href="#login"
-            className="bg-white text-black px-4 py-1 rounded-md font-semibold hover:bg-gray-200 transition duration-300"
+            className="bg-white text-black px-4 py-1 rounded-md font-semibold hover:bg-gray-200 transition duration-400"
           >
             Login
           </a>
