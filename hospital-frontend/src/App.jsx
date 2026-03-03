@@ -1,61 +1,73 @@
-import React,{ useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import Navbar from './components/Navbar'
-import Footer from './components/Footer'
-import Dashboard from './components/Dashboard'
-import PatientList from './patients/PatientsList'
-import AddPatients from './patients/addPatients'
-import PatientDetails from './patients/PatientsDetails'
-import DoctorDetails from './Doctors/DoctorDetails'
-import DoctorSchedule from './Doctors/DoctorSchedule'
-import DoctorList from './Doctors/DoctorList'
-import AddDoctor from './Doctors/AddDoctor'
-import AppointmentList from './Appointments/AppointmentList'
-import AddAppointment from './Appointments/AddApointment'
-import UpdateAppointment from './Appointments/UpdateAppointment'
-import BillingList from './Billing/BillingList'
-import GenerateBill from './Billing/GenerateBill'
-import Login from './Auth/Login'
-import Register from './Auth/Register'
-import Home from '../pages/Home'
-import DashboardPage from '../pages/DashboardPage'
-import NotFound from '../pages/NotFound'
-import './App.css'
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { HospitalProvider } from "./context/HospitalContext";
+import AdminLayout from "./components/AdminLayout";
+
+import Dashboard from "./pages/Dashboard";
+import Patients from "./pages/Patients";
+import Doctors from "./pages/Doctors";
+import Appointments from "./pages/Appointments";
+import Billing from "./pages/Billing";
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
-      <Navbar/>
-       <div className="min-h-screen bg-gray-100 p-6">
-        <h1 className="text-center mt-10 text-2xl">
-          Welcome to Hospital System
-        </h1>
-        
-      <DoctorList/>
-      <DoctorDetails/>
-      <DoctorSchedule/>
-      <AddDoctor/>
-       <PatientList/>
-       <AddPatients/>
-       <PatientDetails/>
-       <AppointmentList/>
-       <AddAppointment/>
-       <UpdateAppointment/>
-       <BillingList/>
-       <GenerateBill/>
-       <Login/>
-       <Register/>
-       <Home/>
-       <DashboardPage/>
-       <NotFound/>
-      <Dashboard/>
-      <Footer />
-      </div>
-    </>
-  )
+    <HospitalProvider>
+      <BrowserRouter>
+        <Routes>
+
+          {/* Dashboard */}
+          <Route
+            path="/"
+            element={
+              <AdminLayout>
+                <Dashboard />
+              </AdminLayout>
+            }
+          />
+
+          {/* Patients */}
+          <Route
+            path="/patients"
+            element={
+              <AdminLayout>
+                <Patients />
+              </AdminLayout>
+            }
+          />
+
+          {/* Doctors */}
+          <Route
+            path="/doctors"
+            element={
+              <AdminLayout>
+                <Doctors />
+              </AdminLayout>
+            }
+          />
+
+          {/* Appointments */}
+          <Route
+            path="/appointments"
+            element={
+              <AdminLayout>
+                <Appointments />
+              </AdminLayout>
+            }
+          />
+
+          {/* Billing */}
+          <Route
+            path="/billing"
+            element={
+              <AdminLayout>
+                <Billing />
+              </AdminLayout>
+            }
+          />
+
+        </Routes>
+      </BrowserRouter>
+    </HospitalProvider>
+  );
 }
 
 export default App
