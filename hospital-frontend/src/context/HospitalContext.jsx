@@ -116,6 +116,11 @@ export const HospitalProvider = ({ children }) => {
     };
     setBills((prev) => [...prev, newBill]);
   };
+  const deleteBill = (id) => {
+  const updatedBills = bills.filter((bill) => bill.id !== id);
+  setBills(updatedBills);
+  localStorage.setItem("bills", JSON.stringify(updatedBills));
+};
 
   /* -------------------------------
      Provider
@@ -134,6 +139,8 @@ export const HospitalProvider = ({ children }) => {
         bookAppointment,
         cancelAppointment,
         generateBill,
+        deleteBill
+        
       }}
     >
       {children}

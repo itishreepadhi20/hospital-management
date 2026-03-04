@@ -3,7 +3,8 @@ import { HospitalContext } from "../context/HospitalContext";
 import jsPDF from "jspdf";
 
 export default function Billing() {
-  const { patients, bills, generateBill } = useContext(HospitalContext);
+  const { patients, bills, generateBill, deleteBill } =
+    useContext(HospitalContext);
 
   const [patientId, setPatientId] = useState("");
   const [amount, setAmount] = useState("");
@@ -48,20 +49,12 @@ export default function Billing() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
 
-          {/* Patient Select */}
-          <div className="flex flex-col space-y-2">
-            <label className="text-sm font-medium text-slate-600 dark:text-slate-300">
-              Select Patient
-            </label>
-
+          <div className="flex flex-col text-white space-y-2">
+            <label>Select Patient</label>
             <select
               value={patientId}
               onChange={(e) => setPatientId(e.target.value)}
-              className="border border-slate-300 dark:border-slate-700 
-              bg-white dark:bg-slate-800 
-              text-slate-800 dark:text-white
-              rounded-xl px-4 py-2 
-              focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+              className="border rounded-xl px-4 py-2"
             >
               <option value="">Choose patient</option>
               {patients.map((p) => (
@@ -72,33 +65,22 @@ export default function Billing() {
             </select>
           </div>
 
-          {/* Amount Input */}
-          <div className="flex flex-col space-y-2">
-            <label className="text-sm font-medium text-slate-600 dark:text-slate-300">
-              Enter Amount
-            </label>
-
+          <div className="flex flex-col text-white space-y-2">
+            <label>Enter Amount</label>
             <input
               type="number"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               placeholder="₹ 0.00"
-              className="border border-slate-300 dark:border-slate-700 
-              bg-white dark:bg-slate-800 
-              text-slate-800 dark:text-white
-              rounded-xl px-4 py-2 
-              focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+              className="border rounded-xl px-4 py-2"
             />
           </div>
 
-          {/* Generate Button */}
           <div className="flex items-end">
             <button
               onClick={handleGenerate}
               disabled={!patientId || !amount}
-              className="w-full bg-blue-600 hover:bg-blue-700 
-              text-white rounded-xl px-4 py-2 font-medium 
-              transition disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-blue-600 text-white rounded-xl px-4 py-2"
             >
               Generate Invoice
             </button>
@@ -110,24 +92,22 @@ export default function Billing() {
       {/* ================= BILL LIST ================= */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-lg p-6 md:p-8 border border-slate-200 dark:border-slate-800">
 
-        <h2 className="text-2xl md:text-3xl font-bold text-slate-800 dark:text-white mb-6">
+        <h2 className="text-2xl text-white font-bold mb-6">
           Invoice History
         </h2>
 
         {bills.length === 0 ? (
-          <p className="text-slate-500 dark:text-slate-400">
-            No invoices generated yet.
-          </p>
+          <p className="text-xl text-white">No invoices generated yet.</p>
         ) : (
           <div className="overflow-x-auto rounded-xl">
             <table className="w-full text-left">
 
               <thead>
-                <tr className="border-b border-slate-200 dark:border-slate-700 text-sm text-slate-500 dark:text-slate-400">
-                  <th className="py-3">Patient</th>
-                  <th className="py-3">Amount</th>
-                  <th className="py-3">Date</th>
-                  <th className="py-3 text-right">Action</th>
+                <tr className="border-b">
+                  <th className="py-3 text-white">Patient</th>
+                  <th className="py-3 text-white">Amount</th>
+                  <th className="py-3 text-white">Date</th>
+                  <th className="py-3 text-white text-right">Actions</th>
                 </tr>
               </thead>
 
@@ -138,29 +118,38 @@ export default function Billing() {
                   );
 
                   return (
-                    <tr
-                      key={b.id}
-                      className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
-                    >
-                      <td className="py-3 text-slate-700 dark:text-slate-200">
+                    <tr key={b.id} className="border-b text-white hover:bg-black">
+
+                      <td className="py-3">
                         {patient?.name || "Unknown"}
                       </td>
 
-                      <td className="py-3 font-semibold text-slate-800 dark:text-white">
+                      <td className="py-3 font-semibold">
                         ₹{Number(b.amount).toLocaleString()}
                       </td>
 
-                      <td className="py-3 text-slate-600 dark:text-slate-300">
+                      <td className="py-3">
                         {new Date(b.date).toLocaleDateString()}
                       </td>
 
-                      <td className="py-3 text-right">
+                      <td className="py-3 text-right space-x-4">
+
+                        {/* Export Button */}
                         <button
                           onClick={() => exportPDF(b)}
-                          className="text-blue-600 hover:text-blue-700 font-medium transition"
+                          className="text-blue-600 font-medium"
                         >
                           Export PDF
                         </button>
+
+                        {/* ✅ Delete Button */}
+                        <button
+                          onClick={() => deleteBill(b.id)}
+                          className="text-red-600 font-medium"
+                        >
+                          Delete
+                        </button>
+
                       </td>
                     </tr>
                   );

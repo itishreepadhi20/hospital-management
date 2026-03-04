@@ -26,7 +26,7 @@ export default function Patients() {
 
       {/* Add Patient Card */}
       <div className="bg-gray-800 rounded-2xl shadow-lg p-6 mb-10">
-        <h2 className="text-2xl font-semibold text-amber-400 mb-4">
+        <h2 className="text-2xl font-semibold text-white mb-4">
           Add New Patient
         </h2>
 
@@ -54,7 +54,7 @@ export default function Patients() {
 
       {/* Patient List Card */}
       <div className="bg-gray-800 rounded-2xl shadow-lg p-6">
-        <h2 className="text-2xl font-semibold text-amber-400 mb-6">
+        <h2 className="text-2xl font-semibold text-white mb-6">
           Patient List
         </h2>
 
