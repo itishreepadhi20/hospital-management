@@ -1,12 +1,15 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { HospitalProvider } from "./context/HospitalContext";
-import AdminLayout from "./components/AdminLayout";
 
+import AdminLayout from "./components/AdminLayout";
+import ProtectedRoute from "./components/protectedRoute";
 import Dashboard from "./pages/Dashboard";
 import Patients from "./pages/Patients";
 import Doctors from "./pages/Doctors";
 import Appointments from "./pages/Appointments";
 import Billing from "./pages/Billing";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
 
 function App() {
   return (
@@ -14,55 +17,29 @@ function App() {
       <BrowserRouter>
         <Routes>
 
-          {/* Dashboard */}
+          {/* 🔓 Public Routes */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+
+          {/* 🔐 Protected Admin Routes */}
           <Route
             path="/"
             element={
-              <AdminLayout>
-                <Dashboard />
-              </AdminLayout>
+              <ProtectedRoute>
+                <AdminLayout />
+              </ProtectedRoute>
             }
-          />
+          >
+            {/* Nested Routes */}
+            <Route index element={<Dashboard />} />
+            <Route path="patients" element={<Patients />} />
+            <Route path="doctors" element={<Doctors />} />
+            <Route path="appointments" element={<Appointments />} />
+            <Route path="billing" element={<Billing />} />
+          </Route>
 
-          {/* Patients */}
-          <Route
-            path="/patients"
-            element={
-              <AdminLayout>
-                <Patients />
-              </AdminLayout>
-            }
-          />
-
-          {/* Doctors */}
-          <Route
-            path="/doctors"
-            element={
-              <AdminLayout>
-                <Doctors />
-              </AdminLayout>
-            }
-          />
-
-          {/* Appointments */}
-          <Route
-            path="/appointments"
-            element={
-              <AdminLayout>
-                <Appointments />
-              </AdminLayout>
-            }
-          />
-
-          {/* Billing */}
-          <Route
-            path="/billing"
-            element={
-              <AdminLayout>
-                <Billing />
-              </AdminLayout>
-            }
-          />
+          {/* 🚫 404 Fallback */}
+          <Route path="*" element={<Navigate to="/" replace />} />
 
         </Routes>
       </BrowserRouter>
@@ -70,4 +47,4 @@ function App() {
   );
 }
 
-export default App
+export default App;

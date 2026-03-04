@@ -5,66 +5,115 @@ export default function Patients() {
   const { patients, addPatient, dischargePatient } = useContext(HospitalContext);
   const [name, setName] = useState("");
 
+  const handleAddPatient = () => {
+    if (!name.trim()) return;
+    addPatient({ name: name.trim(), discharged: false });
+    setName("");
+  };
+
   return (
-    <div className="p-6 min-h-screen bg-gray-900 text-gray-100 font-sans">
+    <div className="p-6 min-h-screen bg-gray-900 text-gray-100">
 
-      {/* Add Patient Section */}
-      <h2 className="text-3xl font-extrabold text-amber-400 mb-6 drop-shadow-lg">
-        Add Patient
-      </h2>
-
-      <div className="flex flex-col md:flex-row gap-4 mb-8">
-        <input
-          className="flex-1 border border-amber-400 rounded-lg p-3 text-gray-900 placeholder-gray-500 
-                     focus:outline-none focus:ring-2 focus:ring-amber-400 bg-gray-100 dark:bg-gray-800 dark:text-gray-100
-                     transition-colors duration-300"
-          placeholder="Patient Name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
-        <button
-          className="bg-amber-400 hover:bg-amber-500 transition-colors text-gray-900 font-bold px-6 py-3 rounded-lg shadow-lg"
-          onClick={() => {
-            if (name.trim() !== "") addPatient({ name });
-            setName("");
-          }}
-        >
-          Add
-        </button>
+      {/* Page Header */}
+      <div className="mb-8">
+        <h1 className="text-4xl font-bold text-white">
+          Patient Management
+        </h1>
+        <p className="text-gray-400 mt-2">
+          Add new patients and manage discharge status.
+        </p>
       </div>
 
-      {/* Patient List */}
-      <h2 className="text-3xl font-extrabold text-amber-400 mb-4 drop-shadow-lg">
-        Patient List
-      </h2>
+      {/* Add Patient Card */}
+      <div className="bg-gray-800 rounded-2xl shadow-lg p-6 mb-10">
+        <h2 className="text-2xl font-semibold text-amber-400 mb-4">
+          Add New Patient
+        </h2>
 
-      <div className="flex flex-col gap-3">
-        {patients.length === 0 && (
-          <p className="text-gray-400 italic">No patients added yet.</p>
-        )}
+        <div className="flex flex-col md:flex-row gap-4">
+          <input
+            type="text"
+            placeholder="Enter Patient Name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="flex-1 px-4 py-3 rounded-lg bg-gray-700 text-white
+                       border border-gray-600
+                       focus:outline-none focus:ring-2 focus:ring-amber-400"
+          />
 
-        {patients.map((p) => (
-          <div
-            key={p.id}
-            className="flex justify-between items-center bg-gray-800 dark:bg-gray-700 
-                       border-l-4 border-amber-400 p-4 rounded-lg shadow-lg 
-                       hover:scale-105 transition-transform duration-300"
+          <button
+            onClick={handleAddPatient}
+            className="px-6 py-3 rounded-lg bg-amber-400 hover:bg-amber-500
+                       text-gray-900 font-semibold shadow-md
+                       transition"
           >
-            <span className="text-lg font-semibold text-amber-300">
-              {p.name} {p.discharged && "(Discharged)"}
-            </span>
+            Add Patient
+          </button>
+        </div>
+      </div>
 
-            {!p.discharged && (
-              <button
-                className="bg-red-500 hover:bg-red-600 text-white font-bold px-4 py-2 rounded-md shadow-md 
-                           transition-colors duration-300"
-                onClick={() => dischargePatient(p.id)}
-              >
-                Discharge
-              </button>
-            )}
+      {/* Patient List Card */}
+      <div className="bg-gray-800 rounded-2xl shadow-lg p-6">
+        <h2 className="text-2xl font-semibold text-amber-400 mb-6">
+          Patient List
+        </h2>
+
+        {patients.length === 0 ? (
+          <div className="text-center py-10">
+            <p className="text-gray-400 text-lg">
+              No patients registered.
+            </p>
+            <p className="text-sm text-gray-500 mt-2">
+              Add patients using the form above.
+            </p>
           </div>
-        ))}
+        ) : (
+          <div className="space-y-4">
+            {patients.map((patient) => (
+              <div
+                key={patient.id}
+                className="flex flex-col md:flex-row md:items-center md:justify-between
+                           bg-gray-700 rounded-xl px-5 py-4
+                           hover:shadow-md transition"
+              >
+                {/* Patient Info */}
+                <div className="mb-3 md:mb-0">
+                  <h3 className="text-lg font-semibold text-white">
+                    {patient.name}
+                  </h3>
+                </div>
+
+                {/* Status + Action */}
+                <div className="flex items-center gap-4">
+
+                  {/* Status Badge */}
+                  <span
+                    className={`px-4 py-1 text-sm font-semibold rounded-full ${
+                      patient.discharged
+                        ? "bg-red-900 text-red-300"
+                        : "bg-green-900 text-green-300"
+                    }`}
+                  >
+                    {patient.discharged ? "Discharged" : "Admitted"}
+                  </span>
+
+                  {/* Discharge Button */}
+                  {!patient.discharged && (
+                    <button
+                      onClick={() => dischargePatient(patient.id)}
+                      className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700
+                                 text-white text-sm font-medium
+                                 transition"
+                    >
+                      Discharge
+                    </button>
+                  )}
+
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

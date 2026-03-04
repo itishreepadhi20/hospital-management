@@ -12,90 +12,166 @@ export default function Billing() {
     const doc = new jsPDF();
     const patient = patients.find((p) => p.id === bill.patientId);
 
-    doc.setFontSize(18);
-    doc.text("🏥 Hospital Invoice", 20, 20);
-    doc.setFontSize(12);
-    doc.text(`Patient: ${patient?.name}`, 20, 40);
-    doc.text(`Amount: ₹${bill.amount}`, 20, 50);
-    doc.text(`Date: ${new Date(bill.date).toLocaleDateString()}`, 20, 60);
+    doc.setFontSize(20);
+    doc.text("Hospital Invoice", 20, 20);
 
-    doc.save(`Bill_${bill.id}.pdf`);
+    doc.setFontSize(12);
+    doc.text(`Patient Name: ${patient?.name || "N/A"}`, 20, 40);
+    doc.text(`Amount: ₹${Number(bill.amount).toLocaleString()}`, 20, 50);
+    doc.text(
+      `Date: ${new Date(bill.date).toLocaleDateString()}`,
+      20,
+      60
+    );
+
+    doc.line(20, 65, 190, 65);
+    doc.save(`Invoice_${bill.id}.pdf`);
+  };
+
+  const handleGenerate = () => {
+    if (!patientId || !amount) return;
+
+    generateBill(patientId, Number(amount));
+    setPatientId("");
+    setAmount("");
   };
 
   return (
-    <div className="p-6 min-h-screen bg-gray-900 text-gray-100 font-sans">
+    <div className="space-y-8">
 
-      {/* Page Header */}
-      <h1 className="text-3xl font-extrabold text-amber-400 drop-shadow-lg mb-6">
-        Billing
-      </h1>
+      {/* ================= BILL GENERATION ================= */}
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-lg p-6 md:p-8 border border-slate-200 dark:border-slate-800">
 
-      {/* Generate Bill Section */}
-      <div className="flex flex-col md:flex-row gap-4 mb-6 items-center">
-        <select
-          onChange={(e) => setPatientId(Number(e.target.value))}
-          value={patientId}
-          className="p-3 rounded-lg border border-amber-400 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-amber-400 transition-colors duration-300"
-        >
-          <option value="">Select Patient</option>
-          {patients.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.name}
-            </option>
-          ))}
-        </select>
+        <h1 className="text-2xl md:text-3xl font-bold text-slate-800 dark:text-white mb-6">
+          Generate Invoice
+        </h1>
 
-        <input
-          type="number"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-          placeholder="Amount"
-          className="p-3 rounded-lg border border-amber-400 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-amber-400 transition-colors duration-300"
-        />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
 
-        <button
-          className={`bg-amber-400 hover:bg-amber-500 text-gray-900 font-bold px-6 py-3 rounded-lg shadow-lg transition-colors duration-300 ${
-            !patientId || !amount ? "opacity-50 cursor-not-allowed" : ""
-          }`}
-          disabled={!patientId || !amount}
-          onClick={() => {
-            generateBill(patientId, amount);
-            setPatientId("");
-            setAmount("");
-          }}
-        >
-          Generate
-        </button>
-      </div>
+          {/* Patient Select */}
+          <div className="flex flex-col space-y-2">
+            <label className="text-sm font-medium text-slate-600 dark:text-slate-300">
+              Select Patient
+            </label>
 
-      {/* Bills List */}
-      <div className="space-y-4">
-        {bills.length === 0 && (
-          <p className="text-gray-400 italic">No bills generated yet.</p>
-        )}
-
-        {bills.map((b) => {
-          const patient = patients.find((p) => p.id === b.patientId);
-          return (
-            <div
-              key={b.id}
-              className="flex justify-between items-center bg-gray-800 dark:bg-gray-700 border-l-4 border-amber-400 p-4 rounded-lg shadow-lg hover:scale-105 transition-transform duration-300"
+            <select
+              value={patientId}
+              onChange={(e) => setPatientId(e.target.value)}
+              className="border border-slate-300 dark:border-slate-700 
+              bg-white dark:bg-slate-800 
+              text-slate-800 dark:text-white
+              rounded-xl px-4 py-2 
+              focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
             >
-              <div>
-                <p className="text-lg font-semibold text-amber-300">{patient?.name}</p>
-                <p className="text-gray-300">₹{b.amount}</p>
-                <p className="text-gray-400 text-sm">{new Date(b.date).toLocaleDateString()}</p>
-              </div>
-              <button
-                onClick={() => exportPDF(b)}
-                className="bg-green-600 hover:bg-green-700 text-white font-bold px-4 py-2 rounded-lg shadow-md transition-colors duration-300"
-              >
-                Export PDF
-              </button>
-            </div>
-          );
-        })}
+              <option value="">Choose patient</option>
+              {patients.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Amount Input */}
+          <div className="flex flex-col space-y-2">
+            <label className="text-sm font-medium text-slate-600 dark:text-slate-300">
+              Enter Amount
+            </label>
+
+            <input
+              type="number"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              placeholder="₹ 0.00"
+              className="border border-slate-300 dark:border-slate-700 
+              bg-white dark:bg-slate-800 
+              text-slate-800 dark:text-white
+              rounded-xl px-4 py-2 
+              focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+            />
+          </div>
+
+          {/* Generate Button */}
+          <div className="flex items-end">
+            <button
+              onClick={handleGenerate}
+              disabled={!patientId || !amount}
+              className="w-full bg-blue-600 hover:bg-blue-700 
+              text-white rounded-xl px-4 py-2 font-medium 
+              transition disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Generate Invoice
+            </button>
+          </div>
+
+        </div>
       </div>
+
+      {/* ================= BILL LIST ================= */}
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-lg p-6 md:p-8 border border-slate-200 dark:border-slate-800">
+
+        <h2 className="text-2xl md:text-3xl font-bold text-slate-800 dark:text-white mb-6">
+          Invoice History
+        </h2>
+
+        {bills.length === 0 ? (
+          <p className="text-slate-500 dark:text-slate-400">
+            No invoices generated yet.
+          </p>
+        ) : (
+          <div className="overflow-x-auto rounded-xl">
+            <table className="w-full text-left">
+
+              <thead>
+                <tr className="border-b border-slate-200 dark:border-slate-700 text-sm text-slate-500 dark:text-slate-400">
+                  <th className="py-3">Patient</th>
+                  <th className="py-3">Amount</th>
+                  <th className="py-3">Date</th>
+                  <th className="py-3 text-right">Action</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {bills.map((b) => {
+                  const patient = patients.find(
+                    (p) => p.id === b.patientId
+                  );
+
+                  return (
+                    <tr
+                      key={b.id}
+                      className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
+                    >
+                      <td className="py-3 text-slate-700 dark:text-slate-200">
+                        {patient?.name || "Unknown"}
+                      </td>
+
+                      <td className="py-3 font-semibold text-slate-800 dark:text-white">
+                        ₹{Number(b.amount).toLocaleString()}
+                      </td>
+
+                      <td className="py-3 text-slate-600 dark:text-slate-300">
+                        {new Date(b.date).toLocaleDateString()}
+                      </td>
+
+                      <td className="py-3 text-right">
+                        <button
+                          onClick={() => exportPDF(b)}
+                          className="text-blue-600 hover:text-blue-700 font-medium transition"
+                        >
+                          Export PDF
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+
+            </table>
+          </div>
+        )}
+      </div>
+
     </div>
   );
 }

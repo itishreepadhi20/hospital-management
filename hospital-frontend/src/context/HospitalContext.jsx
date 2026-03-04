@@ -2,86 +2,124 @@ import { createContext, useState, useEffect } from "react";
 
 export const HospitalContext = createContext();
 
+/* -------------------------------
+   Utility: Safe LocalStorage Loader
+-------------------------------- */
+const loadFromStorage = (key) => {
+  try {
+    const data = localStorage.getItem(key);
+    return data ? JSON.parse(data) : [];
+  } catch (error) {
+    console.error(`Error loading ${key} from storage`, error);
+    return [];
+  }
+};
+
+/* -------------------------------
+   Utility: Save to LocalStorage
+-------------------------------- */
+const saveToStorage = (key, value) => {
+  localStorage.setItem(key, JSON.stringify(value));
+};
+
 export const HospitalProvider = ({ children }) => {
-  // Load doctors from localStorage if available
-  const [doctors, setDoctors] = useState(() => {
-    const saved = localStorage.getItem("doctors");
-    return saved ? JSON.parse(saved) : [];
-  });
+  /* -------------------------------
+     State
+  -------------------------------- */
+  const [doctors, setDoctors] = useState(() => loadFromStorage("doctors"));
+  const [patients, setPatients] = useState(() => loadFromStorage("patients"));
+  const [appointments, setAppointments] = useState(() =>
+    loadFromStorage("appointments")
+  );
+  const [bills, setBills] = useState(() => loadFromStorage("bills"));
 
-  const [patients, setPatients] = useState(() => {
-    const saved = localStorage.getItem("patients");
-    return saved ? JSON.parse(saved) : [];
-  });
+  /* -------------------------------
+     Persist State Automatically
+  -------------------------------- */
+  useEffect(() => saveToStorage("doctors", doctors), [doctors]);
+  useEffect(() => saveToStorage("patients", patients), [patients]);
+  useEffect(() => saveToStorage("appointments", appointments), [appointments]);
+  useEffect(() => saveToStorage("bills", bills), [bills]);
 
-  const [appointments, setAppointments] = useState(() => {
-    const saved = localStorage.getItem("appointments");
-    return saved ? JSON.parse(saved) : [];
-  });
+  /* -------------------------------
+     Helper: Generate Unique ID
+  -------------------------------- */
+  const generateId = () => crypto.randomUUID();
 
-  const [bills, setBills] = useState(() => {
-    const saved = localStorage.getItem("bills");
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  // Save doctors to localStorage whenever it changes
-  useEffect(() => {
-    localStorage.setItem("doctors", JSON.stringify(doctors));
-  }, [doctors]);
-
-  useEffect(() => {
-    localStorage.setItem("patients", JSON.stringify(patients));
-  }, [patients]);
-
-  useEffect(() => {
-    localStorage.setItem("appointments", JSON.stringify(appointments));
-  }, [appointments]);
-
-  useEffect(() => {
-    localStorage.setItem("bills", JSON.stringify(bills));
-  }, [bills]);
-
-  // Add doctor
+  /* -------------------------------
+     Doctor Functions
+  -------------------------------- */
   const addDoctor = (doctor) => {
-    const newDoctor = { id: Date.now(), ...doctor, schedule: ["10:00", "11:00", "12:00"] };
+    const newDoctor = {
+      id: generateId(),
+      ...doctor,
+      schedule: ["10:00", "11:00", "12:00"],
+      createdAt: new Date(),
+    };
     setDoctors((prev) => [...prev, newDoctor]);
   };
 
-  //delete doctor
   const deleteDoctor = (id) => {
-  setDoctors((prev) => prev.filter((d) => d.id !== id));
-};
+    setDoctors((prev) => prev.filter((doctor) => doctor.id !== id));
+  };
 
-  // Add patient
+  /* -------------------------------
+     Patient Functions
+  -------------------------------- */
   const addPatient = (patient) => {
-    const newPatient = { id: Date.now(), ...patient, discharged: false };
+    const newPatient = {
+      id: generateId(),
+      ...patient,
+      discharged: false,
+      createdAt: new Date(),
+    };
     setPatients((prev) => [...prev, newPatient]);
   };
 
-  // Discharge patient
   const dischargePatient = (id) => {
     setPatients((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, discharged: true } : p))
+      prev.map((patient) =>
+        patient.id === id ? { ...patient, discharged: true } : patient
+      )
     );
   };
 
-  // Book appointment
+  /* -------------------------------
+     Appointment Functions
+  -------------------------------- */
   const bookAppointment = ({ patientId, doctorId, time }) => {
-    const newAppointment = { id: Date.now(), patientId, doctorId, time };
+    const newAppointment = {
+      id: generateId(),
+      patientId,
+      doctorId,
+      time,
+      createdAt: new Date(),
+    };
     setAppointments((prev) => [...prev, newAppointment]);
   };
 
-  // Cancel appointment
   const cancelAppointment = (id) => {
-    setAppointments((prev) => prev.filter((a) => a.id !== id));
+    setAppointments((prev) =>
+      prev.filter((appointment) => appointment.id !== id)
+    );
   };
 
-  // Generate bill
+  /* -------------------------------
+     Billing Functions
+  -------------------------------- */
   const generateBill = (patientId, amount) => {
-    const newBill = { id: Date.now(), patientId, amount: Number(amount), date: new Date() };
+    const newBill = {
+      id: generateId(),
+      patientId,
+      amount: Number(amount),
+      date: new Date(),
+    };
     setBills((prev) => [...prev, newBill]);
   };
 
+  /* -------------------------------
+     Provider
+  -------------------------------- */
   return (
     <HospitalContext.Provider
       value={{
@@ -102,8 +140,6 @@ export const HospitalProvider = ({ children }) => {
     </HospitalContext.Provider>
   );
 };
-
-
 
 
 

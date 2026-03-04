@@ -1,126 +1,3 @@
-// import { useContext, useState } from "react";
-// import { HospitalContext } from "../context/HospitalContext";
-
-// export default function Appointments() {
-//   const {
-//     patients,
-//     doctors,
-//     appointments,
-//     bookAppointment,
-//     cancelAppointment,
-//   } = useContext(HospitalContext);
-
-//   const [patientId, setPatientId] = useState("");
-//   const [doctorId, setDoctorId] = useState("");
-//   const [time, setTime] = useState("");
-
-//   const selectedDoctor = doctors.find(d => d.id === Number(doctorId));
-
-//   return (
-//     <div className="p-6 min-h-screen bg-gray-900 text-gray-100 font-sans">
-
-//       {/* Booking Header */}
-//       <h2 className="text-3xl font-extrabold text-cyan-400 drop-shadow-lg mb-6">
-//         Book Appointment
-//       </h2>
-
-//       {/* Booking Form */}
-//       <div className="flex flex-col md:flex-row gap-4 mb-6 items-center">
-//         <select
-//           className="p-3 rounded-lg border border-cyan-400 text-gray-900 bg-gray-100 dark:bg-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-cyan-400"
-//           onChange={(e) => setPatientId(Number(e.target.value))}
-//         >
-//           <option>Select Patient</option>
-//           {patients.map((p) => (
-//             <option key={p.id} value={p.id}>{p.name}</option>
-//           ))}
-//         </select>
-
-//         <select
-//           className="p-3 rounded-lg border border-cyan-400 text-gray-900 bg-gray-100 dark:bg-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-cyan-400"
-//           onChange={(e) => setDoctorId(Number(e.target.value))}
-//         >
-//           <option>Select Doctor</option>
-//           {doctors.map((d) => (
-//             <option key={d.id} value={d.id}>{d.name}</option>
-//           ))}
-//         </select>
-
-//         {selectedDoctor && (
-//           <select
-//             className="p-3 rounded-lg border border-cyan-400 text-gray-900 bg-gray-100 dark:bg-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-cyan-400"
-//             onChange={(e) => setTime(e.target.value)}
-//           >
-//             <option>Select Time</option>
-//             {selectedDoctor.schedule.map((slot, index) => (
-//               <option key={index}>{slot}</option>
-//             ))}
-//           </select>
-//         )}
-
-//         <button
-//           className="bg-cyan-400 hover:bg-cyan-500 text-gray-900 font-bold px-6 py-3 rounded-lg shadow-lg transition-colors"
-//           onClick={() => {
-//             if (patientId && doctorId && time)
-//               bookAppointment({ patientId, doctorId, time });
-//             setPatientId("");
-//             setDoctorId("");
-//             setTime("");
-//           }}
-//         >
-//           Book
-//         </button>
-//       </div>
-
-//       {/* Appointment List */}
-//       <h2 className="text-3xl font-extrabold text-cyan-400 drop-shadow-lg mb-4">
-//         Upcoming Appointments
-//       </h2>
-//       <div className="flex flex-col gap-4">
-//         {appointments.length === 0 && (
-//           <p className="text-gray-400 italic">No appointments booked yet.</p>
-//         )}
-//         {appointments.map((a) => (
-//           <div
-//             key={a.id}
-//             className="flex justify-between items-center bg-gray-800 border-l-4 border-cyan-400 p-4 rounded-lg shadow hover:scale-105 transition-transform"
-//           >
-//             <div className="space-y-1">
-//               <p className="text-lg font-semibold text-cyan-300">
-//                 Patient: {patients.find(p => p.id === a.patientId)?.name}
-//               </p>
-//               <p className="text-gray-300">
-//                 Doctor: {doctors.find(d => d.id === a.doctorId)?.name}
-//               </p>
-//               <p className="text-gray-400 text-sm">Time: {a.time}</p>
-//             </div>
-//             <button
-//               className="bg-red-500 hover:bg-red-600 text-white font-bold px-4 py-2 rounded-lg shadow-md transition-colors"
-//               onClick={() => cancelAppointment(a.id)}
-//             >
-//               Cancel
-//             </button>
-//           </div>
-//         ))}
-//       </div>
-//     </div>
-//   );
-// }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import { useContext, useState, useEffect } from "react";
 import { HospitalContext } from "../context/HospitalContext";
 
@@ -137,131 +14,198 @@ export default function Appointments() {
   const [doctorId, setDoctorId] = useState("");
   const [time, setTime] = useState("");
   const [selectedDoctor, setSelectedDoctor] = useState(null);
-  const [suggestion, setSuggestion] = useState("");
+  const [error, setError] = useState("");
 
-  // Update selected doctor when doctorId changes
   useEffect(() => {
-    const doc = doctors.find((d) => d.id === Number(doctorId));
+    const doc = doctors.find((d) => d.id === doctorId);
     setSelectedDoctor(doc);
 
-    if (doc && !doc.available) {
-      setSuggestion(
-        `⚠️ Doctor "${doc.name}" is unavailable. Please choose another doctor.`
-      );
+    if (doc && doc.available === false) {
+      setError("Selected doctor is currently unavailable.");
     } else {
-      setSuggestion("");
+      setError("");
     }
   }, [doctorId, doctors]);
 
+  const handleBooking = () => {
+    if (!patientId || !doctorId || !time) return;
+
+    bookAppointment({ patientId, doctorId, time });
+
+    setPatientId("");
+    setDoctorId("");
+    setTime("");
+  };
+
   return (
-    <div className="p-6 min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 font-sans transition-colors duration-300">
+    <div className="space-y-8">
 
-      {/* Heading */}
-      <h2 className="text-3xl md:text-4xl font-extrabold text-cyan-600 dark:text-cyan-400 mb-6 drop-shadow-lg">
-        Book Appointment
-      </h2>
+      {/* ================= BOOK APPOINTMENT ================= */}
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-lg p-6 md:p-8 border border-slate-200 dark:border-slate-800">
 
-      {/* Form */}
-      <div className="flex flex-col md:flex-row gap-4 mb-6 items-start">
+        <h1 className="text-2xl md:text-3xl font-bold text-slate-800 dark:text-white mb-6">
+          Book Appointment
+        </h1>
 
-        {/* Patient Select */}
-        <select
-          className="border p-2 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-cyan-400 dark:focus:ring-cyan-300 transition-colors duration-300"
-          onChange={(e) => setPatientId(Number(e.target.value))}
-          value={patientId}
-        >
-          <option value="">Select Patient</option>
-          {patients.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.name}
-            </option>
-          ))}
-        </select>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
 
-        {/* Doctor Select */}
-        <select
-          className="border p-2 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-cyan-400 dark:focus:ring-cyan-300 transition-colors duration-300"
-          onChange={(e) => setDoctorId(Number(e.target.value))}
-          value={doctorId}
-        >
-          <option value="">Select Doctor</option>
-          {doctors.map((d) => (
-            <option key={d.id} value={d.id} disabled={!d.available}>
-              {d.name} {d.available ? "" : "(Not Available)"}
-            </option>
-          ))}
-        </select>
+          {/* Patient */}
+          <div className="flex flex-col space-y-2">
+            <label className="text-sm font-medium text-slate-600 dark:text-slate-300">
+              Select Patient
+            </label>
+            <select
+              value={patientId}
+              onChange={(e) => setPatientId(e.target.value)}
+              className="border border-slate-300 dark:border-slate-700 
+              bg-white dark:bg-slate-800 
+              text-slate-800 dark:text-white
+              rounded-xl px-4 py-2 
+              focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+            >
+              <option value="">Choose patient</option>
+              {patients.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+          </div>
 
-        {/* Time Select */}
-        {selectedDoctor && selectedDoctor.available && (
-          <select
-            className="border p-2 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-cyan-400 dark:focus:ring-cyan-300 transition-colors duration-300"
-            onChange={(e) => setTime(e.target.value)}
-            value={time}
-          >
-            <option value="">Select Time</option>
-            {selectedDoctor.schedule?.map((slot, index) => (
-              <option key={index} value={slot}>
-                {slot}
-              </option>
-            ))}
-          </select>
+          {/* Doctor */}
+          <div className="flex flex-col space-y-2">
+            <label className="text-sm font-medium text-slate-600 dark:text-slate-300">
+              Select Doctor
+            </label>
+            <select
+              value={doctorId}
+              onChange={(e) => setDoctorId(e.target.value)}
+              className="border border-slate-300 dark:border-slate-700 
+              bg-white dark:bg-slate-800 
+              text-slate-800 dark:text-white
+              rounded-xl px-4 py-2 
+              focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+            >
+              <option value="">Choose doctor</option>
+              {doctors.map((d) => (
+                <option
+                  key={d.id}
+                  value={d.id}
+                  disabled={d.available === false}
+                >
+                  {d.name} {d.available === false ? "(Unavailable)" : ""}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Time */}
+          {selectedDoctor && selectedDoctor.available !== false && (
+            <div className="flex flex-col space-y-2">
+              <label className="text-sm font-medium text-slate-600 dark:text-slate-300">
+                Select Time
+              </label>
+              <select
+                value={time}
+                onChange={(e) => setTime(e.target.value)}
+                className="border border-slate-300 dark:border-slate-700 
+                bg-white dark:bg-slate-800 
+                text-slate-800 dark:text-white
+                rounded-xl px-4 py-2 
+                focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+              >
+                <option value="">Choose time</option>
+                {selectedDoctor.schedule?.map((slot, index) => (
+                  <option key={index} value={slot}>
+                    {slot}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* Button */}
+          <div className="flex items-end">
+            <button
+              onClick={handleBooking}
+              disabled={!patientId || !doctorId || !time}
+              className="w-full bg-blue-600 hover:bg-blue-700 
+              text-white rounded-xl px-4 py-2 font-medium 
+              transition disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Book Appointment
+            </button>
+          </div>
+
+        </div>
+
+        {/* Error Message */}
+        {error && (
+          <div className="mt-4 p-3 rounded-lg bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 text-sm font-medium">
+            {error}
+          </div>
         )}
-
-        {/* Book Button */}
-        <button
-          className={`bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg font-bold transition-colors mt-2 md:mt-0 ${
-            !patientId || !doctorId || !time || (selectedDoctor && !selectedDoctor.available)
-              ? "opacity-50 cursor-not-allowed"
-              : "hover:bg-green-700"
-          }`}
-          disabled={!patientId || !doctorId || !time || (selectedDoctor && !selectedDoctor.available)}
-          onClick={() => {
-            bookAppointment({ patientId, doctorId, time });
-            setPatientId("");
-            setDoctorId("");
-            setTime("");
-          }}
-        >
-          Book
-        </button>
       </div>
 
-      {/* Suggestion */}
-      {suggestion && (
-        <p className="text-yellow-500 dark:text-yellow-300 font-semibold mb-4">
-          {suggestion}
-        </p>
-      )}
+      {/* ================= APPOINTMENT LIST ================= */}
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-lg p-6 md:p-8 border border-slate-200 dark:border-slate-800">
 
-      {/* Appointment List */}
-      <div className="mt-8 space-y-4">
-        <h2 className="text-3xl md:text-4xl font-extrabold text-cyan-600 dark:text-cyan-400 mb-4 drop-shadow-lg">
+        <h2 className="text-2xl md:text-3xl font-bold text-slate-800 dark:text-white mb-6">
           Appointment List
         </h2>
 
-        {appointments.length === 0 && (
-          <p className="text-gray-500 dark:text-gray-400 italic">No appointments yet.</p>
-        )}
+        {appointments.length === 0 ? (
+          <p className="text-slate-500 dark:text-slate-400">
+            No appointments scheduled yet.
+          </p>
+        ) : (
+          <div className="overflow-x-auto rounded-xl">
+            <table className="w-full text-left">
 
-        {appointments.map((a) => (
-          <div
-            key={a.id}
-            className="flex flex-col md:flex-row justify-between items-start md:items-center bg-white dark:bg-gray-800 p-4 rounded-lg shadow hover:scale-105 transition-transform transition-colors duration-300"
-          >
-            <span className="mb-2 md:mb-0">
-              Patient: {patients.find((p) => p.id === a.patientId)?.name} | Doctor:{" "}
-              {doctors.find((d) => d.id === a.doctorId)?.name} | Time: {a.time}
-            </span>
-            <button
-              className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-lg shadow-lg transition-colors duration-300"
-              onClick={() => cancelAppointment(a.id)}
-            >
-              Cancel
-            </button>
+              <thead>
+                <tr className="border-b border-slate-200 dark:border-slate-700 text-sm text-slate-500 dark:text-slate-400">
+                  <th className="py-3">Patient</th>
+                  <th className="py-3">Doctor</th>
+                  <th className="py-3">Time</th>
+                  <th className="py-3 text-right">Action</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {appointments.map((a) => (
+                  <tr
+                    key={a.id}
+                    className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
+                  >
+                    <td className="py-3 text-slate-700 dark:text-slate-200">
+                      {patients.find((p) => p.id === a.patientId)?.name}
+                    </td>
+
+                    <td className="py-3 text-slate-700 dark:text-slate-200">
+                      {doctors.find((d) => d.id === a.doctorId)?.name}
+                    </td>
+
+                    <td className="py-3 text-slate-600 dark:text-slate-300">
+                      {a.time}
+                    </td>
+
+                    <td className="py-3 text-right">
+                      <button
+                        onClick={() => cancelAppointment(a.id)}
+                        className="text-red-600 hover:text-red-700 font-medium transition"
+                      >
+                        Cancel
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+
+            </table>
           </div>
-        ))}
+        )}
       </div>
+
     </div>
   );
 }

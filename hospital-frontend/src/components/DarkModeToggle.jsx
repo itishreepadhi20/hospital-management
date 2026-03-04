@@ -2,25 +2,42 @@ import { useEffect, useState } from "react";
 
 export default function DarkModeToggle() {
   const [darkMode, setDarkMode] = useState(() => {
-    return localStorage.getItem("darkMode") === "true";
+    // Check localStorage first
+    const saved = localStorage.getItem("darkMode");
+    if (saved !== null) return saved === "true";
+
+    // Fallback to system preference
+    return window.matchMedia("(prefers-color-scheme: dark)").matches;
   });
 
   useEffect(() => {
-    const root = window.document.documentElement; // <html>
+    const root = document.documentElement;
+
     if (darkMode) {
       root.classList.add("dark");
     } else {
       root.classList.remove("dark");
     }
-    localStorage.setItem("darkMode", darkMode); // persist preference
+
+    localStorage.setItem("darkMode", darkMode);
   }, [darkMode]);
 
   return (
     <button
-      onClick={() => setDarkMode(!darkMode)}
-      className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg shadow hover:scale-105 transition-transform"
+      onClick={() => setDarkMode((prev) => !prev)}
+      aria-label="Toggle Dark Mode"
+      className="relative inline-flex items-center justify-center
+                 w-11 h-11 rounded-full
+                 bg-gray-200 dark:bg-gray-700
+                 text-gray-800 dark:text-yellow-400
+                 shadow-md hover:shadow-lg
+                 transition-all duration-300"
     >
-      {darkMode ? "🌙 Dark Mode" : "☀️ Light Mode"}
+      {darkMode ? (
+        <span className="text-lg">🌙</span>
+      ) : (
+        <span className="text-lg">☀️</span>
+      )}
     </button>
   );
 }
