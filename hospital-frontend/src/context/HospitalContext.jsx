@@ -53,10 +53,17 @@ export const HospitalProvider = ({ children }) => {
     const newDoctor = {
       id: generateId(),
       ...doctor,
-      schedule: ["10:00", "11:00", "12:00"],
+      schedule: ["10:00–11:00", "11:00–12:00", "12:00–13:00"], // example slots
+      available: true,
       createdAt: new Date(),
     };
     setDoctors((prev) => [...prev, newDoctor]);
+  };
+
+  const updateDoctor = (updatedDoctor) => {
+    setDoctors((prev) =>
+      prev.map((doc) => (doc.id === updatedDoctor.id ? { ...updatedDoctor } : doc))
+    );
   };
 
   const deleteDoctor = (id) => {
@@ -84,23 +91,57 @@ export const HospitalProvider = ({ children }) => {
     );
   };
 
+  const deletePatient = (id) => {
+    setPatients((prev) => prev.filter((p) => p.id !== id));
+  };
+
   /* -------------------------------
      Appointment Functions
   -------------------------------- */
-  const bookAppointment = ({ patientId, doctorId, time }) => {
+  const bookAppointment = ({ patientId, doctorId, time, date }) => {
+    const doctor = doctors.find((d) => d.id === doctorId);
+    if (!doctor) return;
+
     const newAppointment = {
       id: generateId(),
       patientId,
       doctorId,
+      date,
       time,
+      department: doctor.department,
+      status: "Scheduled",
       createdAt: new Date(),
     };
+
     setAppointments((prev) => [...prev, newAppointment]);
+
+    // Remove booked time from doctor's schedule
+    setDoctors((prev) =>
+      prev.map((d) =>
+        d.id === doctorId
+          ? { ...d, schedule: d.schedule.filter((t) => t !== time) }
+          : d
+      )
+    );
   };
 
   const cancelAppointment = (id) => {
-    setAppointments((prev) =>
-      prev.filter((appointment) => appointment.id !== id)
+    const appointmentToCancel = appointments.find((a) => a.id === id);
+    if (!appointmentToCancel) return;
+
+    // Remove appointment
+    setAppointments((prev) => prev.filter((a) => a.id !== id));
+
+    // Restore time slot to doctor's schedule
+    setDoctors((prev) =>
+      prev.map((d) =>
+        d.id === appointmentToCancel.doctorId
+          ? {
+              ...d,
+              schedule: [...d.schedule, appointmentToCancel.time].sort(),
+            }
+          : d
+      )
     );
   };
 
@@ -116,12 +157,20 @@ export const HospitalProvider = ({ children }) => {
     };
     setBills((prev) => [...prev, newBill]);
   };
-  const deleteBill = (id) => {
-  const updatedBills = bills.filter((bill) => bill.id !== id);
-  setBills(updatedBills);
-  localStorage.setItem("bills", JSON.stringify(updatedBills));
-};
 
+  const deleteBill = (id) => {
+    setBills((prev) => prev.filter((bill) => bill.id !== id));
+  };
+
+
+  // Add Review Function
+const addReview = (appointmentId, rating, text) => {
+  setAppointments(prev =>
+    prev.map(a =>
+      a.id === appointmentId ? { ...a, review: { rating, text } } : a
+    )
+  );
+};
   /* -------------------------------
      Provider
   -------------------------------- */
@@ -133,116 +182,19 @@ export const HospitalProvider = ({ children }) => {
         appointments,
         bills,
         addDoctor,
+        updateDoctor,
         deleteDoctor,
         addPatient,
         dischargePatient,
+        deletePatient,
         bookAppointment,
         cancelAppointment,
         generateBill,
-        deleteBill
-        
+        deleteBill,
+        addReview
       }}
     >
       {children}
     </HospitalContext.Provider>
   );
 };
-
-
-
-
-
-
-
-
-
-
-// import { createContext, useState } from "react";
-
-// export const HospitalContext = createContext();
-
-// export const HospitalProvider = ({ children }) => {
-//   const [patients, setPatients] = useState([]);
-//   const [doctors, setDoctors] = useState([]);
-//   const [appointments, setAppointments] = useState([]);
-//   const [bills, setBills] = useState([]);
-
-//   // Add Patient
-//   const addPatient = (patient) => {
-//     setPatients([
-//       ...patients,
-//       { ...patient, id: Date.now(), discharged: false, joined: new Date() },
-//     ]);
-//   };
-
-//   // Discharge
-//   const dischargePatient = (id) => {
-//     setPatients(
-//       patients.map((p) =>
-//         p.id === id ? { ...p, discharged: true } : p
-//       )
-//     );
-//   };
-
-//   // Add Doctor with Schedule
-//   const addDoctor = (doctor) => {
-//     setDoctors([
-//       ...doctors,
-//       {
-//         ...doctor,
-//         id: Date.now(),
-//         available: true,
-//         schedule: ["09:00 AM", "10:00 AM", "11:00 AM", "02:00 PM"],
-//       },
-//     ]);
-//   };
-
-//   // Book Appointment
-//   const bookAppointment = ({ patientId, doctorId, time }) => {
-//     const conflict = appointments.find(
-//       (a) => a.doctorId === doctorId && a.time === time
-//     );
-//     if (conflict) return alert("Slot already booked");
-
-//     setAppointments([
-//       ...appointments,
-//       { id: Date.now(), patientId, doctorId, time },
-//     ]);
-//   };
-
-//   const cancelAppointment = (id) => {
-//     setAppointments(appointments.filter((a) => a.id !== id));
-//   };
-
-//   // Billing
-//   const generateBill = (patientId, amount) => {
-//     setBills([
-//       ...bills,
-//       {
-//         id: Date.now(),
-//         patientId,
-//         amount: Number(amount),
-//         date: new Date(),
-//       },
-//     ]);
-//   };
-
-//   return (
-//     <HospitalContext.Provider
-//       value={{
-//         patients,
-//         doctors,
-//         appointments,
-//         bills,
-//         addPatient,
-//         dischargePatient,
-//         addDoctor,
-//         bookAppointment,
-//         cancelAppointment,
-//         generateBill,
-//       }}
-//     >
-//       {children}
-//     </HospitalContext.Provider>
-//   );
-// };
