@@ -5,6 +5,21 @@ import {Patient} from "../models/Patients.models.js"
 import {uploadOnCloudinary} from  "../utils/cloudinary.js"
 
 
+const generateAccessAndRefreshTokens=async(patientId)=>{
+  try {
+    const patient=await Patient.findById(patientId)
+    const accessToken=patient.generateAccessToken()
+    const refreshToken=patient.generateRefreshToken()
+    
+    patient.refreshToken = refreshToken
+        await patient.save({ validateBeforeSave: false })
+
+        return {accessToken,refreshToken}
+  } catch (error) {
+    throw new ApiError(500, "Something went wrong while generating referesh and access token")
+  }
+}
+
 
 const registerPatient = asyncHandler(async(req,res)=> {
     // get user details from frontend
@@ -58,7 +73,7 @@ const registerPatient = asyncHandler(async(req,res)=> {
    
 
     const patient = await Patient.create({
-        fullName,
+        fullname,
         avatar: avatar.url,
         coverImage: coverImage?.url || "",
         email, 
@@ -80,4 +95,66 @@ const registerPatient = asyncHandler(async(req,res)=> {
 
 } )
 
-export {registerPatient}
+
+const loginPatient=asyncHandler(async(req,res)=>{
+  // req body -> data
+    // username or email
+    //find the user
+    //password check
+    //access and referesh token
+    //send cookie
+    const {username,email,password}=req.body
+
+    if(!username && !email){
+      throw new ApiError(400, "username or email is required")
+    }
+
+    // Here is an alternative of above code based on logic discussed in video:
+    // if (!(username || email)) {
+    //     throw new ApiError(400, "username or email is required")
+        
+    // }
+
+    const patient=await Patient.findOne({
+      $or:[{username},{email}]      
+    })
+
+    if (!patient) {
+        throw new ApiError(404, "User does not exist")
+      }
+
+  const isPasswordValid=await patient.isPasswordCorrect(password)
+
+  if (!isPasswordValid) {
+    throw new ApiError(401, "Invalid patient credentials")
+  }
+ const {accessToken,refreshToken}=await generateAccessAndRefreshTokens(patient._id)
+
+ const loggedInUser=await Patient.findById(patient._id).select("-password -refreshToken")
+
+ const options = {
+        httpOnly: true,
+        secure: true
+    }
+
+     return res
+    .status(200)
+    .cookie("accessToken", accessToken, options)
+    .cookie("refreshToken", refreshToken, options)
+    .json(
+      new ApiResponse(
+            200, 
+            {
+                patient: loggedInUser, accessToken, refreshToken
+            },
+            "patient logged In Successfully"
+        )
+    )
+
+    
+})
+
+export {
+  registerPatient,
+  loginPatient
+}
