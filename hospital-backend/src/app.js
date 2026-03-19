@@ -18,6 +18,7 @@ app.use(cookieParser())
 //routes import
 import patientRouter from "./routes/Patients.routes.js"
 
+
 //routes declaration
 app.use("/api/v1/patients",patientRouter)
 

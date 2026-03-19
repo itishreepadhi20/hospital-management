@@ -6,7 +6,7 @@ import { Patient } from "../models/Patients.models.js";
 /**
  * Middleware to verify JWT token and attach patient to req
  */
-export const verifyJWT = asyncHandler(async (req, res, next) => {
+export const verifyJWT = asyncHandler(async (req, res, next) => { 
     try {
         // Get token from cookie or Authorization header
         const token = req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer ", "");
