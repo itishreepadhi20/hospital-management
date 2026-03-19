@@ -253,11 +253,37 @@ const getCurrentPatient=asyncHandler(async(req,res)=>{
         "Patient fetched successfully"
     ))
 })
+
+const updateAccountDetails=asyncHandler(async(req,res)=>{
+   const {fullName,email} = req.body
+
+   if(!fullName || !email){
+    throw new ApiError(400, "All fields are required")
+   }
+
+   const patient=await Patient.findByIdAndUpdate(
+    req.patient?._id,
+    {
+        $set:{
+            fullname,
+            email
+        }
+    },
+    {
+        new:true
+    }
+   ).select("-password")
+
+    return res
+    .status(200)
+    .json(new ApiResponse(200, user, "Account details updated successfully"))
+})
 export {
   registerPatient,
   loginPatient,
   logoutPatient,
   refreshAccessToken,
   changeCurrentPassword,
-  getCurrentPatient
+  getCurrentPatient,
+  updateAccountDetails
 }
