@@ -228,5 +228,7 @@ const refreshAccessToken=asyncHandler(async(req,res)=>{
 export {
   registerPatient,
   loginPatient,
-  logoutPatient
+  logoutPatient,
+  refreshAccessToken
+
 }
