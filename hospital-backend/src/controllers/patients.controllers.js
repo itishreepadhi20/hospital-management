@@ -278,6 +278,39 @@ const updateAccountDetails=asyncHandler(async(req,res)=>{
     .status(200)
     .json(new ApiResponse(200, user, "Account details updated successfully"))
 })
+
+const updatePatientAvatar = asyncHandler(async(req, res) => {
+    const avatarLocalPath = req.file?.path
+
+    if (!avatarLocalPath) {
+        throw new ApiError(400, "Avatar file is missing")
+    }
+
+    //TODO: delete old image - assignment
+
+    const avatar = await uploadOnCloudinary(avatarLocalPath)
+
+    if (!avatar.url) {
+        throw new ApiError(400, "Error while uploading on avatar")
+        
+    }
+
+    const patient = await Patient.findByIdAndUpdate(
+        req.patient?._id,
+        {
+            $set:{
+                avatar: avatar.url
+            }
+        },
+        {new: true}
+    ).select("-password")
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200, patient, "Avatar image updated successfully")
+    )
+})
 export {
   registerPatient,
   loginPatient,
@@ -285,5 +318,6 @@ export {
   refreshAccessToken,
   changeCurrentPassword,
   getCurrentPatient,
-  updateAccountDetails
+  updateAccountDetails,
+  updatePatientAvatar
 }
