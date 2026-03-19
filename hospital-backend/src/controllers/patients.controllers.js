@@ -311,6 +311,42 @@ const updatePatientAvatar = asyncHandler(async(req, res) => {
         new ApiResponse(200, patient, "Avatar image updated successfully")
     )
 })
+
+const updatePatientCoverImage = asyncHandler(async(req, res) => {
+    const coverImageLocalPath = req.file?.path
+
+    if (!coverImageLocalPath) {
+        throw new ApiError(400, "Cover image file is missing")
+    }
+
+    //TODO: delete old image - assignment
+
+
+    const coverImage = await uploadOnCloudinary(coverImageLocalPath)
+
+    if (!coverImage.url) {
+        throw new ApiError(400, "Error while uploading on avatar")
+        
+    }
+
+    const patient = await Patient.findByIdAndUpdate(
+        req.patient?._id,
+        {
+            $set:{
+                coverImage: coverImage.url
+            }
+        },
+        {new: true}
+    ).select("-password")
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200, patient, "Cover image updated successfully")
+    )
+})
+
+
 export {
   registerPatient,
   loginPatient,
@@ -319,5 +355,6 @@ export {
   changeCurrentPassword,
   getCurrentPatient,
   updateAccountDetails,
-  updatePatientAvatar
+  updatePatientAvatar,
+  updatePatientCoverImage
 }
