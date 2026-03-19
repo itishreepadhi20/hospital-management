@@ -3,8 +3,10 @@ import { ApiResponse } from "../utils/ApiResponse"
 import { asyncHandler } from "../utils/asyncHandler"
 import {Patient} from "../models/Patients.models.js"
 import {uploadOnCloudinary} from  "../utils/cloudinary.js"
+import jwt from "jsonwebtoken"
+import mongoose from  "mongoose" 
 
-
+// TOKEN GENERATION LOGIC
 const generateAccessAndRefreshTokens=async(patientId)=>{
   try {
     const patient=await Patient.findById(patientId)
@@ -13,8 +15,8 @@ const generateAccessAndRefreshTokens=async(patientId)=>{
     
     patient.refreshToken = refreshToken
         await patient.save({ validateBeforeSave: false })
-
         return {accessToken,refreshToken}
+
   } catch (error) {
     throw new ApiError(500, "Something went wrong while generating referesh and access token")
   }
@@ -72,7 +74,7 @@ const registerPatient = asyncHandler(async(req,res)=> {
    
 
     const patient = await Patient.create({
-        fullname,
+        fullName,
         avatar: avatar.url,
         coverImage: coverImage?.url || "",
         email, 
@@ -80,16 +82,16 @@ const registerPatient = asyncHandler(async(req,res)=> {
         username: username.toLowerCase()
     })
 
-    const createdUser = await Patient.findById(patient._id).select(
+    const createdPatient = await Patient.findById(patient._id).select(
         "-password -refreshToken"
     )
 
-    if (!createdUser) {
+    if (!createdPatient) {
         throw new ApiError(500, "Something went wrong while registering the user")
     }
 
     return res.status(201).json(
-        new ApiResponse(200, createdUser, "User registered Successfully")
+        new ApiResponse(200, createdPatient, "Patient registered Successfully")
     )
 
 } )
@@ -346,7 +348,65 @@ const updatePatientCoverImage = asyncHandler(async(req, res) => {
     )
 })
 
+const getPatientProfile = asyncHandler(async(req, res) => {
+    const {patientId}=req.params
 
+    if(!patientId?.trim()){
+       throw new ApiError(400, "Patient ID is missing")
+    }
+
+  const patient=await Patient.aggregate([
+    {
+        $match:{
+            _id: new mongoose.Types.ObjectId(patientId)
+        }
+    },
+    {
+        $lookup:{
+            from:"appointments",
+            localField:"_id",
+            foreignField:"patient",
+            as:"appointments"
+        }
+    },
+    {
+       $lookup: {
+                from: "users", // doctors collection
+                localField: "assignedDoctor",
+                foreignField: "_id",
+                as: "doctor"
+            }
+    },
+    {
+      $addFields: {
+                totalAppointments: { $size: "$appointments" },
+                doctor: { $arrayElemAt: ["$doctor", 0] }
+            }
+        },
+        {
+            $project: {
+                fullName: 1,
+                email: 1,
+                age: 1,
+                gender: 1,
+                medicalHistory: 1,
+                totalAppointments: 1,
+                "doctor.fullName": 1,
+                "doctor.specialization": 1
+            }
+        }
+    ])
+
+    if (!patient?.length) {
+        throw new ApiError(404, "Patient not found");
+    }
+
+    return res.status(200).json(
+        new ApiResponse(200, patient[0], "Patient profile fetched successfully")
+    );
+})
+
+    
 export {
   registerPatient,
   loginPatient,
@@ -356,5 +416,6 @@ export {
   getCurrentPatient,
   updateAccountDetails,
   updatePatientAvatar,
-  updatePatientCoverImage
+  updatePatientCoverImage,
+  getPatientProfile 
 }

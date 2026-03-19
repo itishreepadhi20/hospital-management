@@ -21,4 +21,9 @@ import patientRouter from "./routes/Patients.routes.js"
 //routes declaration
 app.use("/api/v1/patients",patientRouter)
 
+// 404 handler
+app.use((req, res) => {
+    res.status(404).json({ message: "Route not found" });
+});
+
 export {app}
