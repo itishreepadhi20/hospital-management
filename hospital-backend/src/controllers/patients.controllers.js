@@ -178,6 +178,7 @@ const logoutPatient=asyncHandler(async(req,res)=>{
     .json(new ApiResponse(200,{},"Patient loggedout"))
 })
 
+
 export {
   registerPatient,
   loginPatient,
