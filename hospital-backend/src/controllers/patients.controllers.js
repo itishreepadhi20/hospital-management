@@ -1,0 +1,421 @@
+import { ApiError } from "../utils/ApiError"
+import { ApiResponse } from "../utils/ApiResponse"
+import { asyncHandler } from "../utils/asyncHandler"
+import {Patient} from "../models/Patients.models.js"
+import {uploadOnCloudinary} from  "../utils/cloudinary.js"
+import jwt from "jsonwebtoken"
+import mongoose from  "mongoose" 
+
+// TOKEN GENERATION LOGIC
+const generateAccessAndRefreshTokens=async(patientId)=>{
+  try {
+    const patient=await Patient.findById(patientId)
+    const accessToken=patient.generateAccessToken()
+    const refreshToken=patient.generateRefreshToken()
+    
+    patient.refreshToken = refreshToken
+        await patient.save({ validateBeforeSave: false })
+        return {accessToken,refreshToken}
+
+  } catch (error) {
+    throw new ApiError(500, "Something went wrong while generating referesh and access token")
+  }
+}
+
+const registerPatient = asyncHandler(async(req,res)=> {
+    // get user details from frontend
+    // validation - not empty
+    // check if user already exists: username, email
+    // check for images, check for avatar
+    // upload them to cloudinary, avatar
+    // create user object - create entry in db
+    // remove password and refresh token field from response
+    // check for user creation
+    // return res
+
+
+    const {fullName, email, username, password } = req.body
+    //console.log("email: ", email);
+
+    if (
+        [fullName, email, username, password].some((field) => field?.trim() === "")
+    ) {
+        throw new ApiError(400, "All fields are required")
+    }
+
+    const existedUser = await Patient.findOne({
+        $or: [{ username }, { email }]
+    })
+
+    if (existedUser) {
+        throw new ApiError(409, "User with email or username already exists")
+    }
+    //console.log(req.files);
+
+    const avatarLocalPath = req.files?.avatar[0]?.path;
+    //const coverImageLocalPath = req.files?.coverImage[0]?.path;
+
+    let coverImageLocalPath;
+    if (req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0) {
+        coverImageLocalPath = req.files.coverImage[0].path
+    }
+    
+
+    if (!avatarLocalPath) {
+        throw new ApiError(400, "Avatar file is required")
+    }
+
+    const avatar = await uploadOnCloudinary(avatarLocalPath)
+    const coverImage = await uploadOnCloudinary(coverImageLocalPath)
+
+    if (!avatar) {
+        throw new ApiError(400, "Avatar file is required")
+    }
+   
+
+    const patient = await Patient.create({
+        fullName,
+        avatar: avatar.url,
+        coverImage: coverImage?.url || "",
+        email, 
+        password,
+        username: username.toLowerCase()
+    })
+
+    const createdPatient = await Patient.findById(patient._id).select(
+        "-password -refreshToken"
+    )
+
+    if (!createdPatient) {
+        throw new ApiError(500, "Something went wrong while registering the user")
+    }
+
+    return res.status(201).json(
+        new ApiResponse(200, createdPatient, "Patient registered Successfully")
+    )
+
+} )
+
+
+const loginPatient=asyncHandler(async(req,res)=>{
+  // req body -> data
+    // username or email
+    //find the user
+    //password check
+    //access and referesh token
+    //send cookie
+    const {username,email,password}=req.body
+
+    if(!username && !email){
+      throw new ApiError(400, "username or email is required")
+    }
+
+    // Here is an alternative of above code based on logic discussed in video:
+    // if (!(username || email)) {
+    //     throw new ApiError(400, "username or email is required")
+        
+    // }
+
+    const patient=await Patient.findOne({
+      $or:[{username},{email}]      
+    })
+
+    if (!patient) {
+        throw new ApiError(404, "User does not exist")
+      }
+
+  const isPasswordValid=await patient.isPasswordCorrect(password)
+
+  if (!isPasswordValid) {
+    throw new ApiError(401, "Invalid patient credentials")
+  }
+ const {accessToken,refreshToken}=await generateAccessAndRefreshTokens(patient._id)
+
+ const loggedInUser=await Patient.findById(patient._id).select("-password -refreshToken")
+
+ const options = {
+        httpOnly: true,
+        secure: true
+    }
+
+     return res
+    .status(200)
+    .cookie("accessToken", accessToken, options)
+    .cookie("refreshToken", refreshToken, options)
+    .json(
+      new ApiResponse(
+            200, 
+            {
+                patient: loggedInUser, accessToken, refreshToken
+            },
+            "patient logged In Successfully"
+        )
+    )
+  
+})
+
+const logoutPatient=asyncHandler(async(req,res)=>{
+    await Patient.findByIdAndUpdate(
+        req.patient._id,
+        {
+            $unset:{
+                refreshToken:1
+            }
+        },
+        {
+            new:true
+        }
+    )
+
+    const options={
+        httpOnly:true,
+        secure:true
+    }
+
+    return res
+    .status(200)
+    .clearCookie("accessToken",options)
+    .clearCookie("refreshToken",options)
+    .json(new ApiResponse(200,{},"Patient loggedout"))
+})
+
+const refreshAccessToken=asyncHandler(async(req,res)=>{
+    const incomingRefreshToken=req.cookies.refreshToken || req.body.refreshToken
+
+    if(!incomingRefreshToken){
+        throw new ApiError(401,"unauthorized request")
+    }
+
+    try {
+        const decodedToken=jwt.verify(
+            incomingRefreshToken,
+            process.env.REFRESH_TOKEN_SECRET
+        )
+        const patient=await Patient.findById(decodedToken?._id)
+    
+        if(!patient){
+            throw new ApiError(401,"invalid refresh token")
+            
+        }
+    
+        if (incomingRefreshToken !== patient?.refreshToken) {
+            throw new ApiError(401, "Refresh token is expired or used")
+        }
+    
+        const options={
+            httpOnly:true,
+            secure:true
+        }
+    
+        const {accessToken,newRefreshToken}=await generateAccessAndRefreshTokens(patient._id)
+    
+        return res
+        .status(200)
+        .cookie("accessToken",accessToken,options)
+        .cookie("refreshToken",newRefreshToken,options)
+        .json(
+                new ApiResponse(
+                    200, 
+                    {accessToken, refreshToken: newRefreshToken},
+                    "Access token refreshed"
+                )
+            )
+    } catch (error) {
+        throw new ApiError(401, error?.message || "Invalid refresh token")        
+    }
+
+
+})
+
+const changeCurrentPassword=asyncHandler(async(req,res)=>{
+    const {oldPassword,newPassword}=req.body
+
+    const patient=await Patient.findById(req.patient._id)
+    const isPasswordCorrect=await Patient.isPasswordCorrect(oldPassword)
+
+    if(!isPasswordCorrect){
+        throw new ApiError(401,"invalid old password")
+
+    }
+    patient.password=newPassword
+    await patient.save({validateBeforeSave:false})
+
+    return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "Password changed successfully"))
+
+})
+
+const getCurrentPatient=asyncHandler(async(req,res)=>{
+ return res
+    .status(200)
+    .json(new ApiResponse(
+        200,
+        req.patient,
+        "Patient fetched successfully"
+    ))
+})
+
+const updateAccountDetails=asyncHandler(async(req,res)=>{
+   const {fullName,email} = req.body
+
+   if(!fullName || !email){
+    throw new ApiError(400, "All fields are required")
+   }
+
+   const patient=await Patient.findByIdAndUpdate(
+    req.patient?._id,
+    {
+        $set:{
+            fullname,
+            email
+        }
+    },
+    {
+        new:true
+    }
+   ).select("-password")
+
+    return res
+    .status(200)
+    .json(new ApiResponse(200, user, "Account details updated successfully"))
+})
+
+const updatePatientAvatar = asyncHandler(async(req, res) => {
+    const avatarLocalPath = req.file?.path
+
+    if (!avatarLocalPath) {
+        throw new ApiError(400, "Avatar file is missing")
+    }
+
+    //TODO: delete old image - assignment
+
+    const avatar = await uploadOnCloudinary(avatarLocalPath)
+
+    if (!avatar.url) {
+        throw new ApiError(400, "Error while uploading on avatar")
+        
+    }
+
+    const patient = await Patient.findByIdAndUpdate(
+        req.patient?._id,
+        {
+            $set:{
+                avatar: avatar.url
+            }
+        },
+        {new: true}
+    ).select("-password")
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200, patient, "Avatar image updated successfully")
+    )
+})
+
+const updatePatientCoverImage = asyncHandler(async(req, res) => {
+    const coverImageLocalPath = req.file?.path
+
+    if (!coverImageLocalPath) {
+        throw new ApiError(400, "Cover image file is missing")
+    }
+
+    //TODO: delete old image - assignment
+
+
+    const coverImage = await uploadOnCloudinary(coverImageLocalPath)
+
+    if (!coverImage.url) {
+        throw new ApiError(400, "Error while uploading on avatar")
+        
+    }
+
+    const patient = await Patient.findByIdAndUpdate(
+        req.patient?._id,
+        {
+            $set:{
+                coverImage: coverImage.url
+            }
+        },
+        {new: true}
+    ).select("-password")
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200, patient, "Cover image updated successfully")
+    )
+})
+
+const getPatientProfile = asyncHandler(async(req, res) => {
+    const {patientId}=req.params
+
+    if(!patientId?.trim()){
+       throw new ApiError(400, "Patient ID is missing")
+    }
+
+  const patient=await Patient.aggregate([
+    {
+        $match:{
+            _id: new mongoose.Types.ObjectId(patientId)
+        }
+    },
+    {
+        $lookup:{
+            from:"appointments",
+            localField:"_id",
+            foreignField:"patient",
+            as:"appointments"
+        }
+    },
+    {
+       $lookup: {
+                from: "users", // doctors collection
+                localField: "assignedDoctor",
+                foreignField: "_id",
+                as: "doctor"
+            }
+    },
+    {
+      $addFields: {
+                totalAppointments: { $size: "$appointments" },
+                doctor: { $arrayElemAt: ["$doctor", 0] }
+            }
+        },
+        {
+            $project: {
+                fullName: 1,
+                email: 1,
+                age: 1,
+                gender: 1,
+                medicalHistory: 1,
+                totalAppointments: 1,
+                "doctor.fullName": 1,
+                "doctor.specialization": 1
+            }
+        }
+    ])
+
+    if (!patient?.length) {
+        throw new ApiError(404, "Patient not found");
+    }
+
+    return res.status(200).json(
+        new ApiResponse(200, patient[0], "Patient profile fetched successfully")
+    );
+})
+
+    
+export {
+  registerPatient,
+  loginPatient,
+  logoutPatient,
+  refreshAccessToken,
+  changeCurrentPassword,
+  getCurrentPatient,
+  updateAccountDetails,
+  updatePatientAvatar,
+  updatePatientCoverImage,
+  getPatientProfile 
+}
